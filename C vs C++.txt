@@ -1,0 +1,362 @@
+Test the given program in C and C++ and see the difference:
+-----------------------------------------------------------
+1) In C++, it is a compiler error to call a function before it is declared. But in C, it may compile.
+
+#include<stdio.h> 
+int main() 
+{ 
+   foo(); 
+}  
+  
+int foo() 
+{ 
+   printf("Hello"); 
+   return 0;  
+}
+
+2) In C++, it is compiler error to make a normal pointer to point a const variable, but it is allowed in C. 
+
+#include <stdio.h> 
+int main(void) 
+{ 
+    int const j = 20; 
+  
+    int *ptr = &j;   
+  
+    printf("*ptr: %d\n", *ptr); 
+  
+    return 0; 
+} 
+
+3) In C, a void pointer can directly be assigned to some other pointer like int *, char *. But in C++, a void pointer must be explicitly typcasted.
+
+#include <stdio.h> 
+int main() 
+{ 
+   void *vptr; 
+   int *iptr = vptr; //In C++, it must be replaced with int *iptr=(int *)vptr;  
+   return 0; 
+} 
+
+
+4) Following program compiles & runs fine in C, but fails in compilation in C++. const variable in C++ must be initialized but in c it isn’t necessary. Thanks to Pravasi Meet for suggesting this point. 
+
+#include <stdio.h> 
+int main() 
+{ 
+    const int a;   // LINE 4 
+    return 0; 
+}
+
+5) This is the worst answer among all, but still a valid answer. We can use one of the C++ specific keywords as variable names. The program won’t compile in C++, but would compiler in C.
+
+#include <stdio.h> 
+int main(void) 
+{ 
+    int new = 5;  // new is a keyword in C++, but not in C 
+    printf("%d", new); 
+} 
+
+6) C++ does more strict type checking than C. For example the following program compiles in C, but not in C++. In C++, we get compiler error “invalid conversion from ‘int’ to ‘char*'”. Thanks to Pravasi Meet for adding this point.
+ 
+#include <stdio.h> 
+int main() 
+{ 
+    char *c = 333; 
+    printf("c = %u", c); 
+    return 0; 
+} 
+
+7) Consider the following program. Predict the output of it when compiled with C and C++ compilers.
+
+void func() 
+{ 
+    /* definition */
+} 
+  
+int main() 
+{ 
+    func(); 
+    func(2); 
+} 
+The above program compiles fine in C, but doesn’t compiler in C++.
+
+In C++, func() is equivalent to func(void)
+In C, func() is equivalent to func(…)
+
+Undefined Behavior in C and C++:
+--------------------------------
+Consider the following C/C++ programs and try to guess the output?
+
+Program 1 (Divide by 0) 
+int main() 
+{ 
+    int x = 25, y = 0; 
+    int z = x / y; 
+    printf("Hello World!"); 
+    return 0; 
+} 
+
+Program 2 (Uninitialized variables) 
+int main() 
+{ 
+    bool val; 
+    if (val) 
+        printf("TRUE"); 
+    else
+        printf("FALSE"); 
+} 
+
+Program 3 (Accessing value of NULL pointer) 
+int main() 
+{ 
+   int *ptr = NULL; 
+   printf("%d", *ptr); 
+   return 0; 
+} 
+
+Program 4 (Accessing out of bound) 
+int main() 
+{ 
+   int arr[5]; 
+  
+   // We access arr[5] in last iteration. 
+   for (int i=0; i<=5; i++) 
+      printf("%d ", arr[i]); 
+} 
+
+Program 5 (Going beyond limit of signed int) 
+int main() 
+{ 
+   int x = INT_MAX; 
+   printf("%d", x+1); 
+   return 0; 
+} 
+
+Program 6 (Trying to modify a string literal) 
+int main() 
+{ 
+   char *s = "geeksforgeeks"; 
+   s[0] = 'e'; 
+   return 0; 
+} 
+
+Program 7 (Modifying a variable multiple times before a defined sequence point) 
+#include <stdio.h> 
+int main() 
+{ 
+   int i = 8; 
+   int p = i++*i++; 
+   printf("%d\n", p); 
+} 
+
+
+Name Mangling and extern “C” in C++:
+------------------------------------
+C++ supports function overloading, i.e., there can be more than one functions with same name and differences in parameters. How does C++ compiler distinguishes between different functions when it generates object code – it changes names by adding information about arguments. This technique of adding additional information to function names is called Name Mangling. C++ standard doesn’t specify any particular technique for name mangling, so different compilers may append different information to function names.
+
+Consider following declarations of function f()
+
+int  f (void) { return 1; } 
+int  f (int)  { return 0; } 
+void g (void) { int i = f(), j = f(0); } 
+A C++ compiler may mangle above names to following 
+int  __f_v (void) { return 1; } 
+int  __f_i (int)  { return 0; } 
+void __g_v (void) { int i = __f_v(), j = __f_i(0); } 
+
+
+How to handle C symbols when linking from C++?
+In C, names may not be mangled as C doesn’t support function overloading. So how to make sure that name of a symbol is not changed when we link a C code in C++. For example, see the following C++ program that uses printf() function of C.
+
+// Save file as .cpp and use C++ compiler to compile it 
+int printf(const char *format,...); 
+  
+int main() 
+{ 
+    printf("Hello"); 
+    return 0; 
+} 
+Output:
+undefined reference to `printf(char const*, ...)'
+      
+The reason for compiler error is simple, name of printf is changed by C++ compiler and it doesn’t find definition of the function with new name.
+
+The solution of problem is extern “C” in C++. When some code is put in extern “C” block, the C++ compiler ensures that the function names are unmangled – that the compiler emits a binary file with their names unchanged, as a C compiler would do.
+
+If we change the above program to following, the program works fine and prints “Hello” on console.
+
+// Save file as .cpp and use C++ compiler to compile it 
+extern "C"
+{ 
+    int printf(const char *format,...); 
+} 
+  
+int main() 
+{ 
+    printf("Hello"); 
+    return 0; 
+} 
+Output:
+Hello
+
+How does “void *” differ in C and C++?
+---------------------------------------
+C allows a void* pointer to be assigned to any pointer type without a cast, whereas C++ does not; this idiom appears often in C code using malloc memory allocation. For example, the following is valid in C but not C++:
+void* ptr; 
+int *i = ptr; /* Implicit conversion from void* to int* */
+
+int *j = malloc(sizeof(int) * 5);
+
+In order to make the code compile in both C and C++, one must use an explicit cast:
+void* ptr; 
+int *i = (int *) ptr; 
+int *j = (int *) malloc(sizeof(int) * 5); 
+
+Type difference of character literals in C and C++:
+---------------------------------------------------
+Every literal (constant) in C/C++ will have a type information associated with it.
+In both C and C++, numeric literals (e.g. 10) will have int as their type. It means sizeof(10) and sizeof(int) will return same value.
+
+However, character literals (e.g. ‘V’) will have different types, sizeof(‘V’) returns different values in C and C++. In C, a character literal is treated as int type where as in C++, a character literal is treated as char type (sizeof(‘V’) and sizeof(char) are same in C++ but not in C).
+
+int main() 
+{ 
+   printf("sizeof('V') = %d sizeof(char) = %d", sizeof('V'), sizeof(char)); 
+   return 0; 
+} 
+
+Result of above program:
+
+C result – sizeof(‘V’) = 4 sizeof(char) = 1
+
+C++ result – sizeof(‘V’) = 1 sizeof(char) = 1
+
+Such behaviour is required in C++ to support function overloading. An example will make it more clear. Predict the output of the following C++ program.
+
+void foo(char c) 
+{ 
+   printf("From foo: char"); 
+} 
+void foo(int i) 
+{ 
+   printf("From foo: int"); 
+} 
+  
+int main() 
+{ 
+   foo('V'); 
+   return 0; 
+} 
+The compiler must call
+void foo(char);
+since ‘V’ type is char.
+
+
+Difference between C structures and C++ structures:
+---------------------------------------------------
+In C++, struct and class are exactly the same things, except for that struct defaults to public visibility and class defaults to private visibility.
+Some important differences between the C and C++ structures:
+
+Member functions inside structure: Structures in C cannot have member functions inside structure but Structures in C++ can have member functions along with data members.
+Direct Initialization: We cannot directly initialize structure data members in C but we can do it in C++.
+
+// C program to demonstrate that direct 
+// member initialization is not possible in C 
+#include <stdio.h> 
+  
+struct Record { 
+    int x = 7; 
+}; 
+  
+// Driver Program 
+int main() 
+{ 
+    struct Record s; 
+    printf("%d", s.x); 
+    return 0; 
+} 
+/* Output :  Compiler Error 
+   6:8: error: expected ':', ', ', ';', '}' or  
+  '__attribute__' before '=' token 
+  int x = 7; 
+        ^ 
+  In function 'main': */
+
+Output:
+7
+Using struct keyword: In C, we need to use struct to declare a struct variable. In C++, struct is not necessary. For example, let there be a structure for Record. In C, we must use “struct Record” for Record variables. In C++, we need not use struct and using ‘Record‘ only would work.
+Static Members: C structures cannot have static members but is allowed in C++.
+
+// C program with structure static member 
+struct Record { 
+    static int x; 
+}; 
+  
+// Driver program 
+int main() 
+{ 
+    return 0; 
+} 
+/* 6:5: error: expected specifier-qualifier-list  
+   before 'static' 
+     static int x; 
+     ^*/
+
+This will generate an error in C but no error in C++.
+Constructor creation in structure: Structures in C cannot have constructor inside structure but Structures in C++ can have Constructor creation.
+
+// C program to demonstrate that Constructor is not allowed 
+#include <stdio.h> 
+  
+struct Student { 
+    int roll; 
+    Student(int x) 
+    { 
+        roll = x; 
+    } 
+}; 
+  
+// Driver Program 
+int main() 
+{ 
+    struct Student s(2); 
+    printf("%d", s.x); 
+    return 0; 
+} 
+/* Output :  Compiler Error 
+   [Error] expected specifier-qualifier-list  
+    before 'Student' 
+   [Error] expected declaration specifiers or  
+   '...' before numeric constant 
+   [Error] 's' undeclared (first use  
+   5555555555in this function) 
+   In function 'main': */
+
+Output:
+2
+sizeof operator: This operator will generate 0 for an empty structure in C whereas 1 for an empty structure in C++.
+
+// C program to illustrate empty structure 
+#include <stdio.h> 
+  
+// empty structure 
+struct Record { 
+}; 
+  
+// Driver program 
+int main() 
+{ 
+    struct Record s; 
+    printf("%d\n", sizeof(s)); 
+    return 0; 
+} 
+Output in C:
+
+0
+Output in C++:
+
+1
+Data Hiding: C structures do not allow concept of Data hiding but is permitted in C++ as C++ is an object oriented language whereas C is not.
+Access Modifiers: C structures do not have access modifiers as these modifiers are not supported by the language. C++ structures can have this concept as it is inbuilt in the language.
+
